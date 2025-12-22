@@ -1,7 +1,7 @@
-﻿using Dalamud.Configuration;
-using System;
+﻿using System;
+using Dalamud.Configuration;
 
-namespace SamplePlugin;
+namespace StrongVibes;
 
 [Serializable]
 public class Configuration : IPluginConfiguration

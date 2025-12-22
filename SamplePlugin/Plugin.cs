@@ -1,12 +1,15 @@
-﻿using Dalamud.Game.Command;
+﻿using System.IO;
+using System.Numerics;
+using System.Text.Json.Serialization.Metadata;
+using Dalamud.Bindings.ImGui;
+using Dalamud.Game.Command;
+using Dalamud.Interface.Textures;
+using Dalamud.Interface.Windowing;
 using Dalamud.IoC;
 using Dalamud.Plugin;
-using System.IO;
-using Dalamud.Interface.Windowing;
 using Dalamud.Plugin.Services;
-using SamplePlugin.Windows;
-
-namespace SamplePlugin;
+using StrongVibes.Windows;
+namespace StrongVibes;
 
 public sealed class Plugin : IDalamudPlugin
 {
@@ -17,31 +20,58 @@ public sealed class Plugin : IDalamudPlugin
     [PluginService] internal static IPlayerState PlayerState { get; private set; } = null!;
     [PluginService] internal static IDataManager DataManager { get; private set; } = null!;
     [PluginService] internal static IPluginLog Log { get; private set; } = null!;
-
+    
     private const string CommandName = "/pmycommand";
+    private const string PersonalTestCommand = "/mytest";
+    private ISharedImmediateTexture iconTexture;
 
     public Configuration Configuration { get; init; }
 
-    public readonly WindowSystem WindowSystem = new("SamplePlugin");
+    public readonly WindowSystem WindowSystem = new("StrongVibes");
     private ConfigWindow ConfigWindow { get; init; }
     private MainWindow MainWindow { get; init; }
-
+    private TestWindow TestWindow { get; init; }
     public Plugin()
     {
         Configuration = PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
-
+        
         // You might normally want to embed resources and load them from the manifest stream
         var goatImagePath = Path.Combine(PluginInterface.AssemblyLocation.Directory?.FullName!, "goat.png");
-
+        var fingerImagePath = Path.Combine(PluginInterface.AssemblyLocation.Directory?.FullName!, "finger.png");
+        iconTexture = TextureProvider.GetFromGameIcon(new GameIconLookup(2914));
         ConfigWindow = new ConfigWindow(this);
-        MainWindow = new MainWindow(this, goatImagePath);
+        
+        PluginInterface.UiBuilder.Draw += DrawUI;
+        
+        MainWindow = new MainWindow(this, goatImagePath, iconTexture);
+        
+        TestWindow = new TestWindow(this, fingerImagePath);
 
         WindowSystem.AddWindow(ConfigWindow);
         WindowSystem.AddWindow(MainWindow);
+        WindowSystem.AddWindow(TestWindow);
 
+        var testLookup = new GameIconLookup(2914);
+        //var icon = TextureProvider.GetFromGameIcon(testLookup);
+        
+        var lookup = new GameIconLookup
+        {
+            IconId = 060411,
+            ItemHq = false,
+            HiRes = true,
+            Language = null
+        };
+        
+        //var jobIconTexture = textureProvider.GetFromGameIcon(lookup);
+        
         CommandManager.AddHandler(CommandName, new CommandInfo(OnCommand)
         {
             HelpMessage = "A useful message to display in /xlhelp"
+        });
+
+        CommandManager.AddHandler(PersonalTestCommand, new CommandInfo(TestCommand)
+        {
+            HelpMessage = "This is a second command made by myself"
         });
 
         // Tell the UI system that we want our windows to be drawn through the window system
@@ -58,6 +88,8 @@ public sealed class Plugin : IDalamudPlugin
         // Use /xllog to open the log window in-game
         // Example Output: 00:57:54.959 | INF | [SamplePlugin] ===A cool log message from Sample Plugin===
         Log.Information($"===A cool log message from {PluginInterface.Manifest.Name}===");
+        Log.Debug($"Finger Image path: {fingerImagePath}");
+        Log.Debug($"Finger Image path: {goatImagePath}");
     }
 
     public void Dispose()
@@ -71,7 +103,7 @@ public sealed class Plugin : IDalamudPlugin
 
         ConfigWindow.Dispose();
         MainWindow.Dispose();
-
+        PluginInterface.UiBuilder.Draw -= DrawUI;
         CommandManager.RemoveHandler(CommandName);
     }
 
@@ -80,6 +112,24 @@ public sealed class Plugin : IDalamudPlugin
         // In response to the slash command, toggle the display status of our main ui
         MainWindow.Toggle();
     }
+
+    private void TestCommand(string command, string args)
+    {
+        TestWindow.Toggle();
+    }
+
+    private void DrawUI()
+    {
+        if (iconTexture != null && iconTexture.TryGetWrap(out var wrap, out _))
+        {
+            var drawList = ImGui.GetBackgroundDrawList();
+            var pos = new Vector2(100, 100);
+            var size = new Vector2(32, 32);
+            
+            drawList.AddImage(wrap.Handle, pos, pos + size);
+        }
+    }
+    
     
     public void ToggleConfigUi() => ConfigWindow.Toggle();
     public void ToggleMainUi() => MainWindow.Toggle();

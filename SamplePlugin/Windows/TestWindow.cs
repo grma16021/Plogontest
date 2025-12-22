@@ -5,57 +5,71 @@ using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
 using Lumina.Excel.Sheets;
+using Dalamud.Plugin;
+using Dalamud.Plugin.Services;
+using Serilog;
 using Dalamud.Interface.Textures;
 using Dalamud.Plugin.Services;
-namespace StrongVibes.Windows;
 using System.Numerics;
-using Serilog;
-using StrongVibes;
 
 
-public class MainWindow : Window, IDisposable
+namespace StrongVibes.Windows;
+
+public class TestWindow : Window, IDisposable
 {
-    private readonly string goatImagePath;
-    
+    private readonly string fingerImagePath;
     private readonly Plugin plugin;
-    
     private ISharedImmediateTexture? jobIconTexture;
-    
-    private readonly ISharedImmediateTexture? iconTexture;
     
     // We give this window a hidden ID using ##.
     // The user will see "My Amazing Window" as window title,
     // but for ImGui the ID is "My Amazing Window##With a hidden ID"
-    public MainWindow(Plugin plugin, string goatImagePath, ISharedImmediateTexture? icon)
-        : base("My Amazing Window##With a hidden ID", ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse)
+    public TestWindow(Plugin plugin, string fingerImagePath)
+        : base("My Test window that moggs people", ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse)
     {
         SizeConstraints = new WindowSizeConstraints
         {
-            MinimumSize = new Vector2(375, 330),
+            MinimumSize = new Vector2(500, 500),
             MaximumSize = new Vector2(float.MaxValue, float.MaxValue)
         };
 
-        this.goatImagePath = goatImagePath;
+        this.fingerImagePath = fingerImagePath;
         this.plugin = plugin;
-        iconTexture = icon;
+    }
+
+    private void LoadJobIcon(ITextureProvider textureProvider, uint iconId = 62001)
+    {
+        var lookup = new GameIconLookup
+        {
+            IconId = iconId,
+            ItemHq = false,
+            HiRes = true,
+            Language = null
+        };
+        
+        jobIconTexture = textureProvider.GetFromGameIcon(lookup);
     }
 
     public void Dispose() { }
-    
-   
 
     public override void Draw()
     {
+        var iconWrap = jobIconTexture?.GetWrapOrDefault();
+
+        if (iconWrap != null)
+        {
+            ImGui.Image(iconWrap.Handle,new Vector2(iconWrap.Width, iconWrap.Height));
+        }
+        else
+        {
+            ImGui.Text("Icon loading failed or still in progress");
+        }
+    
         ImGui.Text($"The random config bool is {plugin.Configuration.SomePropertyToBeSavedAndWithADefault}");
 
         if (ImGui.Button("Show Settings"))
         {
             plugin.ToggleConfigUi();
-        }
-
-        if (iconTexture != null && iconTexture.TryGetWrap(out var wrap, out _))
-        {
-            ImGui.Image(wrap.Handle,new Vector2(32,32));
         }
 
         ImGui.Spacing();
@@ -68,18 +82,19 @@ public class MainWindow : Window, IDisposable
             // Check if this child is drawing
             if (child.Success)
             {
-                ImGui.Text("Have a goat:");
-                var goatImage = Plugin.TextureProvider.GetFromFile(goatImagePath).GetWrapOrDefault();
-                if (goatImage != null)
+                ImGui.Text("Mogged:");
+                var fingerImage = Plugin.TextureProvider.GetFromFile(fingerImagePath).GetWrapOrDefault();
+                if (fingerImage != null)
                 {
                     using (ImRaii.PushIndent(55f))
                     {
-                        ImGui.Image(goatImage.Handle, goatImage.Size);
+                        ImGui.Image(fingerImage.Handle, fingerImage.Size);
                     }
                 }
                 else
                 {
-                    ImGui.Text("Image not found.");
+                    ImGui.Text($"Image not found. fingerImage var == {fingerImage}");
+                    Log.Debug($"Finger Image path: {fingerImagePath}");
                 }
 
                 ImGuiHelpers.ScaledDummy(20.0f);
