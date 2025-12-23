@@ -10,7 +10,10 @@ public class Configuration : IPluginConfiguration
 
     public bool IsConfigWindowMovable { get; set; } = true;
     public bool SomePropertyToBeSavedAndWithADefault { get; set; } = true;
-
+    public int XPos { get; set; } = 500;
+    public int YPos { get; set; } = 500;
+    public int scaleX { get; set; } = 64;
+    public int scaleY { get; set; } = 64;
     // The below exists just to make saving less cumbersome
     public void Save()
     {

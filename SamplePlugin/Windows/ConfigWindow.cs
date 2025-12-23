@@ -1,14 +1,20 @@
 ﻿using System;
+using System.Configuration;
 using System.Numerics;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Windowing;
+using Dalamud.IoC;
+using Dalamud.Plugin;
+using Serilog;
 
 namespace StrongVibes.Windows;
 
 public class ConfigWindow : Window, IDisposable
 {
-    private readonly Configuration configuration;
-
+    [PluginService]internal static IDalamudPluginInterface PluginInterface { get; private set; } = null!;
+    private Configuration configuration { get; init;}
+    
+    
     // We give this window a constant ID using ###.
     // This allows for labels to be dynamic, like "{FPS Counter}fps###XYZ counter window",
     // and the window ID will always be "###XYZ counter window" for ImGui
@@ -17,11 +23,13 @@ public class ConfigWindow : Window, IDisposable
         Flags = ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoScrollbar |
                 ImGuiWindowFlags.NoScrollWithMouse;
 
-        Size = new Vector2(232, 90);
+        Size = new Vector2(500, 500);
         SizeCondition = ImGuiCond.Always;
 
         configuration = plugin.Configuration;
-    }
+        
+        
+}
 
     public void Dispose() { }
 
@@ -36,12 +44,14 @@ public class ConfigWindow : Window, IDisposable
         {
             Flags |= ImGuiWindowFlags.NoMove;
         }
+        
     }
 
     public override void Draw()
     {
         // Can't ref a property, so use a local copy
         var configValue = configuration.SomePropertyToBeSavedAndWithADefault;
+        
         if (ImGui.Checkbox("Random Config Bool", ref configValue))
         {
             configuration.SomePropertyToBeSavedAndWithADefault = configValue;
@@ -55,5 +65,36 @@ public class ConfigWindow : Window, IDisposable
             configuration.IsConfigWindowMovable = movable;
             configuration.Save();
         }
+        int Xpos = configuration.XPos;
+        if (ImGui.InputInt("Enter X position", ref Xpos))
+        {
+            configuration.XPos = Xpos;
+            configuration.Save();
+        }
+        int Ypos = configuration.YPos;
+        if (ImGui.InputInt("Enter Y position", ref Ypos))
+        {
+            configuration.YPos = Ypos;
+            configuration.Save(); 
+        }
+
+        int scaleX = configuration.scaleX;
+        if (ImGui.InputInt("Scale X", ref scaleX))
+        {
+            configuration.scaleX = scaleX;
+            configuration.Save();
+        }
+        int scaleY = configuration.scaleY;
+        if (ImGui.InputInt("Scale Y", ref scaleY))
+        {
+            configuration.scaleY = scaleY;
+            configuration.Save();
+        }
+        
+        
+        ImGui.Text($"Current X Value is: {Xpos}");
+        ImGui.Text($"Current Y Value is: {Ypos}");
+        ImGui.Text($"Scale X Value is: {scaleX}");
+        ImGui.Text($"Scale Y Value is: {scaleY}");
     }
 }

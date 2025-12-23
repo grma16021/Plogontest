@@ -9,27 +9,45 @@ using Dalamud.Interface.Windowing;
 using Dalamud.IoC;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
+using FFXIVClientStructs.FFXIV.Client.System.String;
 using StrongVibes.Windows;
 using Lumina.Excel.Sheets;
 
 namespace StrongVibes;
 
-
 public sealed class Plugin : IDalamudPlugin
 {
-    [PluginService] internal static IDalamudPluginInterface PluginInterface { get; private set; } = null!;
-    [PluginService] internal static ITextureProvider TextureProvider { get; private set; } = null!;
-    [PluginService] internal static ICommandManager CommandManager { get; private set; } = null!;
-    [PluginService] internal static IClientState ClientState { get; private set; } = null!;
-    [PluginService] internal static IPlayerState PlayerState { get; private set; } = null!;
-    [PluginService] internal static IDataManager DataManager { get; private set; } = null!;
-    [PluginService] internal static IPluginLog Log { get; private set; } = null!;
-    [PluginService] internal static IObjectTable ObjectTable { get; private set; } = null!;
-    [PluginService] internal static IFramework Framework { get; private set; } = null!;
-    
-    
+    [PluginService]
+    internal static IDalamudPluginInterface PluginInterface { get; private set; } = null!;
+
+    [PluginService]
+    internal static ITextureProvider TextureProvider { get; private set; } = null!;
+
+    [PluginService]
+    internal static ICommandManager CommandManager { get; private set; } = null!;
+
+    [PluginService]
+    internal static IClientState ClientState { get; private set; } = null!;
+
+    [PluginService]
+    internal static IPlayerState PlayerState { get; private set; } = null!;
+
+    [PluginService]
+    internal static IDataManager DataManager { get; private set; } = null!;
+
+    [PluginService]
+    internal static IPluginLog Log { get; private set; } = null!;
+
+    [PluginService]
+    internal static IObjectTable ObjectTable { get; private set; } = null!;
+
+    [PluginService]
+    internal static IFramework Framework { get; private set; } = null!;
+
+
     private const string CommandName = "/pmycommand";
     private const string PersonalTestCommand = "/mytest";
+    private const string SettingsCommand = "/SAsettings";
     private ISharedImmediateTexture iconTexture;
 
     public Configuration Configuration { get; init; }
@@ -38,20 +56,23 @@ public sealed class Plugin : IDalamudPlugin
     private ConfigWindow ConfigWindow { get; init; }
     private MainWindow MainWindow { get; init; }
     private TestWindow TestWindow { get; init; }
+
     public Plugin()
     {
         Configuration = PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
-        
+
+
+        Log.Debug($"X Position from config: {Configuration.XPos}");
         // You might normally want to embed resources and load them from the manifest stream
         var goatImagePath = Path.Combine(PluginInterface.AssemblyLocation.Directory?.FullName!, "goat.png");
         var fingerImagePath = Path.Combine(PluginInterface.AssemblyLocation.Directory?.FullName!, "finger.png");
         iconTexture = TextureProvider.GetFromGameIcon(new GameIconLookup(3406));
         ConfigWindow = new ConfigWindow(this);
-        
+
         PluginInterface.UiBuilder.Draw += DrawUI;
-        
+
         MainWindow = new MainWindow(this, goatImagePath, iconTexture);
-        
+
         TestWindow = new TestWindow(this, fingerImagePath);
 
         WindowSystem.AddWindow(ConfigWindow);
@@ -62,8 +83,8 @@ public sealed class Plugin : IDalamudPlugin
         //var icon = TextureProvider.GetFromGameIcon(testLookup);
 
         Framework.Update += OnFrameworkTick;
-        
-        
+
+
         var lookup = new GameIconLookup
         {
             IconId = 060411,
@@ -71,9 +92,9 @@ public sealed class Plugin : IDalamudPlugin
             HiRes = true,
             Language = null
         };
-        
+
         //var jobIconTexture = textureProvider.GetFromGameIcon(lookup);
-        
+
         CommandManager.AddHandler(CommandName, new CommandInfo(OnCommand)
         {
             HelpMessage = "A useful message to display in /xlhelp"
@@ -82,6 +103,10 @@ public sealed class Plugin : IDalamudPlugin
         CommandManager.AddHandler(PersonalTestCommand, new CommandInfo(TestCommand)
         {
             HelpMessage = "This is a second command made by myself"
+        });
+        CommandManager.AddHandler(SettingsCommand, new CommandInfo(ConfigCommand)
+        {
+            HelpMessage = "opens settings menu"
         });
 
         // Tell the UI system that we want our windows to be drawn through the window system
@@ -108,7 +133,7 @@ public sealed class Plugin : IDalamudPlugin
         PluginInterface.UiBuilder.Draw -= WindowSystem.Draw;
         PluginInterface.UiBuilder.OpenConfigUi -= ToggleConfigUi;
         PluginInterface.UiBuilder.OpenMainUi -= ToggleMainUi;
-        
+
         WindowSystem.RemoveAllWindows();
 
         ConfigWindow.Dispose();
@@ -128,32 +153,44 @@ public sealed class Plugin : IDalamudPlugin
         TestWindow.Toggle();
     }
 
+    private void ConfigCommand(string command, string args)
+    {
+        ConfigWindow.Toggle();
+    }
+
     private void DrawUI()
     {
         var player = ClientState.LocalPlayer;
-        
+
         bool hasRG = player.StatusList.Any(s => s.StatusId == 1833);
-        if (iconTexture != null && iconTexture.TryGetWrap(out var wrap1, out _ ))
+        if (iconTexture != null && iconTexture.TryGetWrap(out var wrap1, out _))
         {
-            var pos = new Vector2(1000, 650);
-            foreach (var status in player.StatusList)
+            int Xpos = Configuration.XPos;
+            int Ypos = Configuration.YPos;
+            int scaleX = Configuration.scaleX;
+            int scaleY = Configuration.scaleY;
+            var pos = new Vector2(Xpos, Ypos);
+            var textPos = new Vector2(1000,599);
+            if (player != null)
             {
-                var statusData = status.GameData.Value;
-                iconTexture = TextureProvider.GetFromGameIcon(new GameIconLookup(statusData.Icon));
-                iconTexture.TryGetWrap(out var wrap, out _);
-                var drawList = ImGui.GetBackgroundDrawList();
-                
-                pos.X += 50;
-                var size = new Vector2(64, 64);
-                
-                drawList.AddImage(wrap.Handle, pos, pos + size);
+                foreach (var status in player.StatusList)
+                {
+                    var statusData = status.GameData.Value;
+                    iconTexture = TextureProvider.GetFromGameIcon(new GameIconLookup(statusData.Icon));
+                    iconTexture.TryGetWrap(out var wrap, out _);
+                    var drawList = ImGui.GetBackgroundDrawList();
+                    var color = ImGui.GetColorU32(new Vector4(0, 0, 0, 1));
+
+                    pos.X += 50;
+                    
+                    var size = new Vector2(scaleX, scaleY);
+                    int testTime = (int)status.RemainingTime;
+                    drawList.AddImage(wrap.Handle, pos, pos + size);
+                    ImGui.SetWindowFontScale(2.0f);
+                    drawList.AddText(pos,color,$"{testTime}");
+                    ImGui.SetWindowFontScale(1.0f);
+                }
             }
-            {
-                
-            }
-            
-            
-            
         }
     }
 
@@ -161,7 +198,7 @@ public sealed class Plugin : IDalamudPlugin
     {
         var player = ClientState.LocalPlayer;
         var playerThing = player.StatusList;
-      //  var anotherPlayerThing = player.TargetObject.GameObjectId;
+        //  var anotherPlayerThing = player.TargetObject.GameObjectId;
 
         if (player == null)
         {
@@ -169,35 +206,24 @@ public sealed class Plugin : IDalamudPlugin
         }
         else
         {
-            
             //this 
-            foreach (var status in  player.StatusList)
+            foreach (var status in player.StatusList)
             {
                 Log.Debug($"Status list:{status.StatusId}");
                 var statusData = status.GameData.Value;
                 Log.Debug($"Status Name: {statusData.Name}");
                 Log.Debug($"Status Icon: {statusData.Icon}");
-                
-                
-                    
-                
-                
+                Log.Debug($"{statusData.Name} REMAINING TIME: {status.RemainingTime}");
             }
 
             //if (anotherPlayerThing != null)
             {
                 //Log.Debug($"TARGET GAME OBJECT ID:{anotherPlayerThing}");
             }
-            
         }
-
-        
-
     }
 
- 
-    
-    
+
     public void ToggleConfigUi() => ConfigWindow.Toggle();
     public void ToggleMainUi() => MainWindow.Toggle();
 }
