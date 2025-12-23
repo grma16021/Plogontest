@@ -161,7 +161,15 @@ public sealed class Plugin : IDalamudPlugin
     private void DrawUI()
     {
         var player = ClientState.LocalPlayer;
-
+        if (player == null)
+        {
+            return;
+        }
+        else
+        {
+            
+        
+        //Line below is creating errors
         bool hasRG = player.StatusList.Any(s => s.StatusId == 1833);
         if (iconTexture != null && iconTexture.TryGetWrap(out var wrap1, out _))
         {
@@ -170,7 +178,7 @@ public sealed class Plugin : IDalamudPlugin
             int scaleX = Configuration.scaleX;
             int scaleY = Configuration.scaleY;
             var pos = new Vector2(Xpos, Ypos);
-            var textPos = new Vector2(1000,599);
+            var textPos = new Vector2(Xpos,Ypos);
             if (player != null)
             {
                 foreach (var status in player.StatusList)
@@ -180,24 +188,29 @@ public sealed class Plugin : IDalamudPlugin
                     iconTexture.TryGetWrap(out var wrap, out _);
                     var drawList = ImGui.GetBackgroundDrawList();
                     var color = ImGui.GetColorU32(new Vector4(0, 0, 0, 1));
-
-                    pos.X += 50;
                     
+                    pos.X += 50;
+                    textPos.X += 50;
                     var size = new Vector2(scaleX, scaleY);
                     int testTime = (int)status.RemainingTime;
                     drawList.AddImage(wrap.Handle, pos, pos + size);
-                    ImGui.SetWindowFontScale(2.0f);
-                    drawList.AddText(pos,color,$"{testTime}");
+                    if(testTime != 0)
+                    {
+                        ImGui.SetWindowFontScale(2.0f);
+                        drawList.AddText(textPos, color, $"{testTime}");
+                    }
                     ImGui.SetWindowFontScale(1.0f);
                 }
             }
+        }
         }
     }
 
     private void OnFrameworkTick(IFramework framework)
     {
         var player = ClientState.LocalPlayer;
-        var playerThing = player.StatusList;
+        
+        
         //  var anotherPlayerThing = player.TargetObject.GameObjectId;
 
         if (player == null)
@@ -206,6 +219,7 @@ public sealed class Plugin : IDalamudPlugin
         }
         else
         {
+            var playerThing = player.StatusList;
             //this 
             foreach (var status in player.StatusList)
             {
