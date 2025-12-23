@@ -167,8 +167,6 @@ public sealed class Plugin : IDalamudPlugin
         }
         else
         {
-            
-        
         //Line below is creating errors
         bool hasRG = player.StatusList.Any(s => s.StatusId == 1833);
         if (iconTexture != null && iconTexture.TryGetWrap(out var wrap1, out _))
@@ -179,6 +177,8 @@ public sealed class Plugin : IDalamudPlugin
             int scaleY = Configuration.scaleY;
             var pos = new Vector2(Xpos, Ypos);
             var textPos = new Vector2(Xpos,Ypos);
+            var textOffset = new Vector2(10, 20);
+            var iconOffset = new Vector2(64, 0);
             if (player != null)
             {
                 foreach (var status in player.StatusList)
@@ -187,13 +187,15 @@ public sealed class Plugin : IDalamudPlugin
                     iconTexture = TextureProvider.GetFromGameIcon(new GameIconLookup(statusData.Icon));
                     iconTexture.TryGetWrap(out var wrap, out _);
                     var drawList = ImGui.GetBackgroundDrawList();
-                    var color = ImGui.GetColorU32(new Vector4(0, 0, 0, 1));
+                    var textColor = new Vector4(Configuration.textRed, Configuration.textGreen, Configuration.textBlue, Configuration.textAlpha);
+                    var color = ImGui.GetColorU32(textColor);
+                    //pos.X += 50;
                     
-                    pos.X += 50;
-                    textPos.X += 50;
                     var size = new Vector2(scaleX, scaleY);
                     int testTime = (int)status.RemainingTime;
                     drawList.AddImage(wrap.Handle, pos, pos + size);
+                    textPos = pos + textOffset;
+                    pos = pos + iconOffset;
                     if(testTime != 0)
                     {
                         ImGui.SetWindowFontScale(2.0f);

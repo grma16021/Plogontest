@@ -90,11 +90,40 @@ public class ConfigWindow : Window, IDisposable
             configuration.scaleY = scaleY;
             configuration.Save();
         }
+
+        float red = configuration.textRed;
+        if (ImGui.InputFloat("red value", ref red))
+        {
+            configuration.textRed = red;
+            configuration.Save();
+        }
+        float green = configuration.textGreen;
+        if (ImGui.InputFloat("green value", ref green))
+        {
+            configuration.textGreen = green;
+            configuration.Save();
+        }
+        float blue = configuration.textBlue;
+        if (ImGui.InputFloat("blue value", ref blue))
+        {
+            configuration.textBlue = blue;
+            configuration.Save();
+        }
+        float alpha = configuration.textAlpha;
+        if (ImGui.InputFloat("red value", ref alpha))
+        {
+            configuration.textAlpha = alpha;
+            configuration.Save();
+        }
         
         
         ImGui.Text($"Current X Value is: {Xpos}");
         ImGui.Text($"Current Y Value is: {Ypos}");
         ImGui.Text($"Scale X Value is: {scaleX}");
         ImGui.Text($"Scale Y Value is: {scaleY}");
+        ImGui.Text($"Alpha Value is: {alpha}");
+        ImGui.Text($"Red Value is: {red}");
+        ImGui.Text($"Green Value is: {green}");
+        ImGui.Text($"Blue Value is: {blue}");
     }
 }

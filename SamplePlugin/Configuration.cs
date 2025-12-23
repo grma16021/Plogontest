@@ -14,6 +14,11 @@ public class Configuration : IPluginConfiguration
     public int YPos { get; set; } = 500;
     public int scaleX { get; set; } = 64;
     public int scaleY { get; set; } = 64;
+
+    public float textRed { get; set; } = 1;
+    public float textGreen { get; set; } = 0;
+    public float textBlue { get; set; } = 0;
+    public float textAlpha { get; set; } = 1;
     // The below exists just to make saving less cumbersome
     public void Save()
     {
