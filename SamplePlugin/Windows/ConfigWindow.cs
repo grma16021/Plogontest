@@ -115,6 +115,12 @@ public class ConfigWindow : Window, IDisposable
             configuration.textAlpha = alpha;
             configuration.Save();
         }
+        bool tankReminder = configuration.tankReminder;
+        if (ImGui.Checkbox("Tank Reminder", ref tankReminder))
+        {
+            configuration.tankReminder = tankReminder;
+            configuration.Save();
+        }
         
         
         ImGui.Text($"Current X Value is: {Xpos}");

@@ -19,6 +19,7 @@ public class Configuration : IPluginConfiguration
     public float textGreen { get; set; } = 0;
     public float textBlue { get; set; } = 0;
     public float textAlpha { get; set; } = 1;
+    public bool tankReminder { get; set; } = false;
     // The below exists just to make saving less cumbersome
     public void Save()
     {

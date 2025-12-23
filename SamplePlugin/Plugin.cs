@@ -205,6 +205,19 @@ public sealed class Plugin : IDalamudPlugin
                 }
             }
         }
+
+        if (Configuration.tankReminder)
+        {
+            if(!hasRG)
+            {
+                var textColor = new Vector4(Configuration.textRed, Configuration.textGreen, Configuration.textBlue, Configuration.textAlpha);
+                var color = ImGui.GetColorU32(textColor);
+                var drawList = ImGui.GetBackgroundDrawList();
+                ImGui.SetWindowFontScale(3.0f);
+                drawList.AddText(new Vector2(1000,300),color, "MISSING TANKSTANCE");
+                ImGui.SetWindowFontScale(1.0f);
+            }
+        }
         }
     }
 
