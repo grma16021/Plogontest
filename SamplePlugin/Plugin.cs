@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using System.Linq;
 using System.Numerics;
 using System.Text.Json.Serialization.Metadata;
 using Dalamud.Bindings.ImGui;
@@ -9,7 +10,10 @@ using Dalamud.IoC;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
 using StrongVibes.Windows;
+using Lumina.Excel.Sheets;
+
 namespace StrongVibes;
+
 
 public sealed class Plugin : IDalamudPlugin
 {
@@ -20,6 +24,9 @@ public sealed class Plugin : IDalamudPlugin
     [PluginService] internal static IPlayerState PlayerState { get; private set; } = null!;
     [PluginService] internal static IDataManager DataManager { get; private set; } = null!;
     [PluginService] internal static IPluginLog Log { get; private set; } = null!;
+    [PluginService] internal static IObjectTable ObjectTable { get; private set; } = null!;
+    [PluginService] internal static IFramework Framework { get; private set; } = null!;
+    
     
     private const string CommandName = "/pmycommand";
     private const string PersonalTestCommand = "/mytest";
@@ -38,7 +45,7 @@ public sealed class Plugin : IDalamudPlugin
         // You might normally want to embed resources and load them from the manifest stream
         var goatImagePath = Path.Combine(PluginInterface.AssemblyLocation.Directory?.FullName!, "goat.png");
         var fingerImagePath = Path.Combine(PluginInterface.AssemblyLocation.Directory?.FullName!, "finger.png");
-        iconTexture = TextureProvider.GetFromGameIcon(new GameIconLookup(2914));
+        iconTexture = TextureProvider.GetFromGameIcon(new GameIconLookup(3406));
         ConfigWindow = new ConfigWindow(this);
         
         PluginInterface.UiBuilder.Draw += DrawUI;
@@ -51,8 +58,11 @@ public sealed class Plugin : IDalamudPlugin
         WindowSystem.AddWindow(MainWindow);
         WindowSystem.AddWindow(TestWindow);
 
-        var testLookup = new GameIconLookup(2914);
+        var testLookup = new GameIconLookup(3406);
         //var icon = TextureProvider.GetFromGameIcon(testLookup);
+
+        Framework.Update += OnFrameworkTick;
+        
         
         var lookup = new GameIconLookup
         {
@@ -120,15 +130,72 @@ public sealed class Plugin : IDalamudPlugin
 
     private void DrawUI()
     {
-        if (iconTexture != null && iconTexture.TryGetWrap(out var wrap, out _))
+        var player = ClientState.LocalPlayer;
+        
+        bool hasRG = player.StatusList.Any(s => s.StatusId == 1833);
+        if (iconTexture != null && iconTexture.TryGetWrap(out var wrap1, out _ ))
         {
-            var drawList = ImGui.GetBackgroundDrawList();
-            var pos = new Vector2(100, 100);
-            var size = new Vector2(32, 32);
+            var pos = new Vector2(1000, 650);
+            foreach (var status in player.StatusList)
+            {
+                var statusData = status.GameData.Value;
+                iconTexture = TextureProvider.GetFromGameIcon(new GameIconLookup(statusData.Icon));
+                iconTexture.TryGetWrap(out var wrap, out _);
+                var drawList = ImGui.GetBackgroundDrawList();
+                
+                pos.X += 50;
+                var size = new Vector2(64, 64);
+                
+                drawList.AddImage(wrap.Handle, pos, pos + size);
+            }
+            {
+                
+            }
             
-            drawList.AddImage(wrap.Handle, pos, pos + size);
+            
+            
         }
     }
+
+    private void OnFrameworkTick(IFramework framework)
+    {
+        var player = ClientState.LocalPlayer;
+        var playerThing = player.StatusList;
+      //  var anotherPlayerThing = player.TargetObject.GameObjectId;
+
+        if (player == null)
+        {
+            return;
+        }
+        else
+        {
+            
+            //this 
+            foreach (var status in  player.StatusList)
+            {
+                Log.Debug($"Status list:{status.StatusId}");
+                var statusData = status.GameData.Value;
+                Log.Debug($"Status Name: {statusData.Name}");
+                Log.Debug($"Status Icon: {statusData.Icon}");
+                
+                
+                    
+                
+                
+            }
+
+            //if (anotherPlayerThing != null)
+            {
+                //Log.Debug($"TARGET GAME OBJECT ID:{anotherPlayerThing}");
+            }
+            
+        }
+
+        
+
+    }
+
+ 
     
     
     public void ToggleConfigUi() => ConfigWindow.Toggle();
